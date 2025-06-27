@@ -19,7 +19,6 @@ class Economy(commands.Cog):
                 return result[0]
 
     async def update_balance(self, user_id: int, amount: int, db=None):
-        # Use provided db connection if available to prevent concurrent writes
         if db is None:
             async with aiosqlite.connect("economy.db", timeout=10) as new_db:
                 await new_db.execute("INSERT OR IGNORE INTO users (user_id, balance) VALUES (?, ?)", (user_id, 0))
@@ -58,10 +57,8 @@ class Economy(commands.Cog):
         async with self.db_lock:
             try:
                 async with aiosqlite.connect("economy.db", timeout=10) as db:
-                    # Ensure the user exists in the last_claims table
                     await db.execute("INSERT OR IGNORE INTO last_claims (user_id, last_claim) VALUES (?, ?)", (user_id, None))
 
-                    # Check last claim time
                     async with db.execute("SELECT last_claim FROM last_claims WHERE user_id = ?", (user_id,)) as cursor:
                         result = await cursor.fetchone()
                         last_claim_raw = result[0] if result else None
@@ -72,11 +69,9 @@ class Economy(commands.Cog):
                             if now - last_claim < timedelta(hours=24):
                                 return await ctx.send("🕒 You already claimed your role income today. Come back later!")
 
-                    # Update the last claim timestamp
                     await db.execute("UPDATE last_claims SET last_claim = ? WHERE user_id = ?", (now.isoformat(), user_id))
                     print("3. Last claim updated for user:", user_id, "New claim time:", now.isoformat())
 
-                    # Calculate role-based income with detailed logging
                     total_income = 0
                     roles_with_income = []
                     roles_checked = []
@@ -96,16 +91,13 @@ class Economy(commands.Cog):
 
                             print(f"4. Checking role {role.name} for user {user_id}: Income amount found: {row}")
 
-                    # Log summary of all roles
                     print(f"4a. All roles checked for user {user_id}: {roles_checked}")
                     print(f"4b. Roles with income for user {user_id}: {roles_with_income}")
                     print(f"5. Total income calculated for user {user_id}: ${total_income}")
 
-                    # Update balance with shared DB connection
                     await self.update_balance(user_id, total_income, db)
                     print(f"6. Balance updated for user {user_id}")
 
-                    # Commit changes
                     await db.commit()
                     print(f"7. Database changes committed for user {user_id}")
 
@@ -113,7 +105,6 @@ class Economy(commands.Cog):
                 print(f"Critical error in claim command for user {user_id}: {e}")
                 return await ctx.send("❌ An error occurred while processing your claim. Please try again later.")
 
-        # Final response
         if total_income == 0:
             await ctx.send("""✅ Claim successful, but none of your roles have income configured.
 -# If you are an admin, use `/addroleincome` to set income for roles.""")
@@ -147,7 +138,7 @@ class Economy(commands.Cog):
                     if not crimes:
                         return await ctx.send("No crimes available. Ask an admin to add some using `/addrobbery`.")
                     crime = random.choice(crimes)
-                    success = random.random() < (crime[1] / 100)  # <-- fix here
+                    success = random.random() < (crime[1] / 100)
                     reward = random.randint(crime[2], crime[3])
                     if success:
                         await self.update_balance(ctx.author.id, reward, db)

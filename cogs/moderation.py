@@ -12,7 +12,6 @@ class Moderation(commands.Cog):
 
     async def initialize_db(self):
         async with aiosqlite.connect(self.db_path) as db:
-            # Table to track timed mutes
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS mutes (
                     guild_id INTEGER,
@@ -21,7 +20,6 @@ class Moderation(commands.Cog):
                     PRIMARY KEY(guild_id, user_id)
                 )
             """)
-            # Table to log mod actions
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS mod_actions (
                     action_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +55,7 @@ class Moderation(commands.Cog):
         if not self._validate_reason(reason):
             return await ctx.send("You must provide a valid reason for purging messages.")
         
-        deleted = await ctx.channel.purge(limit=amount + 1)  # Include command message
+        deleted = await ctx.channel.purge(limit=amount + 1)
         await ctx.send(f"🧹 Deleted {len(deleted)-1} messages.", delete_after=5)
         
         await self.log_action(ctx.guild.id, None, ctx.author.id, "purge", reason)

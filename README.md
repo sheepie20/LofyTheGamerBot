@@ -130,6 +130,16 @@ All actions are logged in the `moderation.db` for record keeping.
 
 ---
 
+## 🎫 Ticket Commands
+
+| Command           | Description                                          |
+| ----------------- | ---------------------------------------------------- |
+| `/tickets setup`          | Setup the ticket system (channel, category, etc.) |
+| `/tickets panel`          | Display the interactive ticket panel              |
+| `/tickets reset-settings` | Clear all ticket settings for the server          |
+| `/tickets help`           | Show a tutorial on setting up the ticket system   |
+| `/tickets open`           | Open a support ticket manually                   |
+
 ## 📚 Database Tables
 
 **economy.db:**
